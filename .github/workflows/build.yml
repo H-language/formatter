@@ -1,0 +1,79 @@
+###----------------------------------------------------------------------------
+# H build Script - v1 - @ENDESGA - 2025 - Made in NZ - CC0 - foss forever
+###----------------------------------------------------------------------------
+name: build
+on: workflow_dispatch
+permissions: { contents: write }
+
+env:
+  PROGRAM_NAME: formatter
+  PROGRAM_VERSION: "0.1"
+  PROGRAM_SOURCE: formatter.c
+  UPX_VERSION: "5.0.1"
+  TCC_VERSION: "0.9.27"
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: checkout code
+        uses: actions/checkout@v4
+
+      - name: download H.h
+        shell: bash
+        run: |
+          curl -sLo H.h "https://raw.githubusercontent.com/H-language/H/main/H.h"
+
+      #------- LINUX -------
+      - name: setup & build (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          echo 'man-db man-db/auto-update boolean false' | sudo debconf-set-selections
+          sudo rm -f /var/lib/man-db/auto-update /var/lib/dpkg/info/man-db.postinst
+          sudo apt-get update && sudo apt-get install -y --no-install-recommends tcc upx-ucl
+          tcc -o "${{ env.PROGRAM_NAME }}" "${{ env.PROGRAM_SOURCE }}"
+          upx --ultra-brute --force "${{ env.PROGRAM_NAME }}" || true
+
+      #------- WINDOWS -------
+      - name: setup & build (Windows)
+        if: runner.os == 'Windows'
+        shell: bash
+        run: |
+          curl -sLo tcc.zip "https://download.savannah.gnu.org/releases/tinycc/tcc-${{ env.TCC_VERSION }}-win64-bin.zip" &
+          curl -sLo upx.zip "https://github.com/upx/upx/releases/download/v${{ env.UPX_VERSION }}/upx-${{ env.UPX_VERSION }}-win64.zip" &
+          wait
+          unzip -q tcc.zip -d ./tcc
+          unzip -q upx.zip -d ./upx
+          ./tcc/tcc/tcc.exe -o "${{ env.PROGRAM_NAME }}.exe" "${{ env.PROGRAM_SOURCE }}"
+          ./upx/upx-*/upx.exe --ultra-brute --force "${{ env.PROGRAM_NAME }}.exe" || true
+          
+      #------- UPLOAD FOR RELEASE -------
+      - name: upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.PROGRAM_NAME }}-${{ runner.os }}
+          path: ${{ env.PROGRAM_NAME }}${{ runner.os == 'Windows' && '.exe' || '' }}
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with: { path: artifacts/ }
+        
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: artifacts/*/*
+          name: "download ${{ env.PROGRAM_NAME }}"
+          tag_name: "${{ env.PROGRAM_VERSION }}"
+          body: |
+            # version ${{ env.PROGRAM_VERSION }}
+
+            download from the appropriate link for your operating system:
+            
+            ## [${{ env.PROGRAM_NAME }} for Linux](https://github.com/${{ github.repository }}/releases/download/${{ env.PROGRAM_VERSION }}/${{ env.PROGRAM_NAME }})
+            
+            ## [${{ env.PROGRAM_NAME }} for Windows](https://github.com/${{ github.repository }}/releases/download/${{ env.PROGRAM_VERSION }}/${{ env.PROGRAM_NAME }}.exe)
