@@ -61,7 +61,7 @@ start
 		{
 			check_mode = 1;
 			input_file_index = 2;
-			
+
 			if( input_count <= 2 )
 			{
 				print( "usage: formatter check [source-to-check]\n" );
@@ -839,7 +839,7 @@ start
 		{
 			temp const n4 formatted_size = output_ref - output;
 			temp const n4 original_size = input_file.size;
-			
+
 			if( formatted_size isnt original_size )
 			{
 				print( "file not formatted: " );
@@ -848,7 +848,7 @@ start
 				file_unmap( ref_of( input_file ) );
 				out failure;
 			}
-			
+
 			temp n4 i = 0;
 			while( i < formatted_size )
 			{
@@ -862,7 +862,7 @@ start
 				}
 				++i;
 			}
-			
+
 			print( "file is formatted: " );
 			print( input_bytes[ input_file_index ] );
 			print( "\n" );
