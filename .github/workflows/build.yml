@@ -30,6 +30,7 @@ jobs:
       #------- LINUX -------
       - name: setup & build (Linux)
         if: runner.os == 'Linux'
+        shell: bash
         run: |
           echo 'man-db man-db/auto-update boolean false' | sudo debconf-set-selections
           sudo rm -f /var/lib/man-db/auto-update /var/lib/dpkg/info/man-db.postinst
@@ -42,10 +43,10 @@ jobs:
         if: runner.os == 'Windows'
         shell: bash
         run: |
-          # Download with error checking
-          curl -fLo tcc.zip "https://download.savannah.gnu.org/releases/tinycc/tcc-${{ env.TCC_VERSION }}-win64-bin.zip"
-          curl -fLo upx.zip "https://github.com/upx/upx/releases/download/v${{ env.UPX_VERSION }}/upx-${{ env.UPX_VERSION }}-win64.zip"
-          ls -la *.zip
+          # Download in parallel but wait for completion
+          curl -Lo tcc.zip "https://download.savannah.gnu.org/releases/tinycc/tcc-${{ env.TCC_VERSION }}-win64-bin.zip" &
+          curl -Lo upx.zip "https://github.com/upx/upx/releases/download/v${{ env.UPX_VERSION }}/upx-${{ env.UPX_VERSION }}-win64.zip" &
+          wait
           unzip -q tcc.zip -d ./tcc
           unzip -q upx.zip -d ./upx
           ./tcc/tcc/tcc.exe -o "${{ env.PROGRAM_NAME }}.exe" "${{ env.PROGRAM_SOURCE }}"
