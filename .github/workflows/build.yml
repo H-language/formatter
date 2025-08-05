@@ -25,7 +25,7 @@ jobs:
       - name: download H.h
         shell: bash
         run: |
-          curl -sLo H.h "https://raw.githubusercontent.com/H-language/H/main/H.h"
+          curl -fLo H.h "https://raw.githubusercontent.com/H-language/H/main/H.h"
 
       #------- LINUX -------
       - name: setup & build (Linux)
@@ -42,9 +42,10 @@ jobs:
         if: runner.os == 'Windows'
         shell: bash
         run: |
-          curl -sLo tcc.zip "https://download.savannah.gnu.org/releases/tinycc/tcc-${{ env.TCC_VERSION }}-win64-bin.zip" &
-          curl -sLo upx.zip "https://github.com/upx/upx/releases/download/v${{ env.UPX_VERSION }}/upx-${{ env.UPX_VERSION }}-win64.zip" &
-          wait
+          # Download with error checking
+          curl -fLo tcc.zip "https://download.savannah.gnu.org/releases/tinycc/tcc-${{ env.TCC_VERSION }}-win64-bin.zip"
+          curl -fLo upx.zip "https://github.com/upx/upx/releases/download/v${{ env.UPX_VERSION }}/upx-${{ env.UPX_VERSION }}-win64.zip"
+          ls -la *.zip
           unzip -q tcc.zip -d ./tcc
           unzip -q upx.zip -d ./upx
           ./tcc/tcc/tcc.exe -o "${{ env.PROGRAM_NAME }}.exe" "${{ env.PROGRAM_SOURCE }}"
