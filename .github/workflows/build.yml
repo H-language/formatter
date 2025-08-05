@@ -43,7 +43,6 @@ jobs:
         if: runner.os == 'Windows'
         shell: bash
         run: |
-          # Download in parallel but wait for completion
           curl -Lo tcc.zip "https://download.savannah.gnu.org/releases/tinycc/tcc-${{ env.TCC_VERSION }}-win64-bin.zip" &
           curl -Lo upx.zip "https://github.com/upx/upx/releases/download/v${{ env.UPX_VERSION }}/upx-${{ env.UPX_VERSION }}-win64.zip" &
           wait
