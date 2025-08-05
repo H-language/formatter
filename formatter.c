@@ -43,10 +43,11 @@ start
 	};
 
 	temp n1 input_file_index = 1;
+	temp n1 check_mode = 0;
 
 	if( input_count <= 1 )
 	{
-		print( "usage: formatter [text-to-format] [optional-out]\n   or: formatter version\n" );
+		print( "usage: formatter [text-to-format] [optional-out]\n   or: formatter version\n   or: formatter check [text-to-check]\n" );
 		out success;
 	}
 	else
@@ -55,6 +56,17 @@ start
 		{
 			print( "formatter version " formatter_version " (" OS_NAME ")\n" );
 			out success;
+		}
+		else if( bytes_compare( input_bytes[ 1 ], "check", 5 ) is 0 )
+		{
+			check_mode = 1;
+			input_file_index = 2;
+			
+			if( input_count <= 2 )
+			{
+				print( "usage: formatter check [source-to-check]\n" );
+				out failure;
+			}
 		}
 	}
 
@@ -821,6 +833,41 @@ start
 		if( val_of( output_ref - 1 ) isnt '\n' )
 		{
 			output_add_newline();
+		}
+
+		if( check_mode )
+		{
+			temp const n4 formatted_size = output_ref - output;
+			temp const n4 original_size = input_file.size;
+			
+			if( formatted_size isnt original_size )
+			{
+				print( "file not formatted: " );
+				print( input_bytes[ input_file_index ] );
+				print( " (size mismatch)\n" );
+				file_unmap( ref_of( input_file ) );
+				out failure;
+			}
+			
+			temp n4 i = 0;
+			while( i < formatted_size )
+			{
+				if( output[ i ] isnt input_file.mapped_bytes[ i ] )
+				{
+					print( "file not formatted: " );
+					print( input_bytes[ input_file_index ] );
+					print( " (content differs)\n" );
+					file_unmap( ref_of( input_file ) );
+					out failure;
+				}
+				++i;
+			}
+			
+			print( "file is formatted: " );
+			print( input_bytes[ input_file_index ] );
+			print( "\n" );
+			file_unmap( ref_of( input_file ) );
+			out success;
 		}
 
 		print( "formatting: \"" );
