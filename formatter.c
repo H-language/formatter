@@ -752,12 +752,13 @@ start
 			{
 				output_add_indent();
 
+				if( previous_token_type isnt token_word )
+				{
+					output_add_space();
+				}
+
 				if( val_of( input_ref + 1 ) is '.' )
 				{
-					if( previous_token_type isnt token_word )
-					{
-						output_add_space();
-					}
 					output_add_input();
 					output_add_input();
 					jump check_input;
