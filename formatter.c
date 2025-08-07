@@ -1,6 +1,6 @@
 #include "H.h"
 
-#define formatter_version AS_BYTES( 0.1 )
+#define formatter_version AS_BYTES( 0.2 )
 
 start
 {
@@ -93,6 +93,9 @@ start
 
 	temp i2 parenthesis_scope = 0;
 	temp i2 brace_scope = 0;
+	temp i2 bracket_scope = 0;
+
+	temp i2 assignment_brace_scope = 0;
 
 	//
 
@@ -386,6 +389,18 @@ start
 
 			when( '{', '}' )
 			{
+				if(current_assignment_type isnt assignment_unknown)
+				{
+					if( input_ref_val is '{')
+					{
+						++assignment_brace_scope;
+					}
+					else
+					{
+						--assignment_brace_scope;
+					}
+				}
+
 				if( parenthesis_scope isnt 0 or current_assignment_type is assignment_single_line )
 				{
 					jump add_input;
@@ -424,6 +439,7 @@ start
 
 			when( '[' )
 			{
+				++bracket_scope;
 				previous_token_type = token_symbol;
 				output_add_input();
 				jump check_input;
@@ -431,6 +447,7 @@ start
 
 			when( ']' )
 			{
+				--bracket_scope;
 				if( val_of( output_ref - 1 ) isnt '[' )
 				{
 					output_add_space();
@@ -469,7 +486,7 @@ start
 				}
 
 				output_add_input();
-				if( parenthesis_scope is 0 and current_assignment_type isnt assignment_single_line and current_line_type isnt line_define )
+				if( parenthesis_scope is 0 and bracket_scope is 0 and ( assignment_brace_scope is 0 or current_assignment_type is assignment_multi_line ) and current_line_type isnt line_define )
 				{
 					output_add_newline();
 				}
