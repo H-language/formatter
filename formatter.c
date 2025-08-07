@@ -208,6 +208,8 @@ start
 					{
 						output_add_newline();
 					}
+					//
+					other skip;
 				}
 
 				if( previous_token_type is token_newline_gap and parenthesis_scope is 0 )
@@ -397,7 +399,13 @@ start
 					}
 					else
 					{
-						--assignment_brace_scope;
+						if(assignment_brace_scope is 0)
+						{
+							current_assignment_type is assignment_unknown;
+						}
+						else {
+							--assignment_brace_scope;
+						}
 					}
 				}
 
@@ -430,7 +438,7 @@ start
 				}
 				output_add_input();
 
-				if( current_line_type isnt line_define )
+				if( current_line_type isnt line_define and (current_line_type isnt line_define_multi or val_of(input_ref) isnt ';' ) )
 				{
 					output_add_newline();
 				}
@@ -774,14 +782,20 @@ start
 					output_add_space();
 				}
 
+				previous_token_type = token_symbol;
+
 				if( val_of( input_ref + 1 ) is '.' )
 				{
 					output_add_input();
-					output_add_input();
+					if( val_of( input_ref + 1 ) is '.' )
+					{
+						output_add_input();
+						output_add_input();
+						jump check_input;
+					}
 					jump check_input;
 				}
 
-				previous_token_type = token_symbol;
 				output_add_input();
 				jump check_input;
 			}
