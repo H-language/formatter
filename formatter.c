@@ -241,8 +241,13 @@ start
 			{
 				previous_token_type = token_symbol;
 
-				if( line_size is 0 )
+				if( current_line_type isnt line_define and current_line_type isnt line_define_multi )
 				{
+					if( line_size isnt 0 )
+					{
+						output_add_newline();
+					}
+
 					++input_ref;
 
 					preprocessor_skip_gap:
