@@ -391,19 +391,20 @@ start
 
 			when( '{', '}' )
 			{
-				if(current_assignment_type isnt assignment_unknown)
+				if( current_assignment_type isnt assignment_unknown )
 				{
-					if( input_ref_val is '{')
+					if( input_ref_val is '{' )
 					{
 						++assignment_brace_scope;
 					}
 					else
 					{
-						if(assignment_brace_scope is 0)
+						if( assignment_brace_scope is 0 )
 						{
 							current_assignment_type is assignment_unknown;
 						}
-						else {
+						else
+						{
 							--assignment_brace_scope;
 						}
 					}
@@ -438,7 +439,7 @@ start
 				}
 				output_add_input();
 
-				if( current_line_type isnt line_define and (current_line_type isnt line_define_multi or val_of(input_ref) isnt ';' ) )
+				if( current_line_type isnt line_define and ( current_line_type isnt line_define_multi or val_of( input_ref ) isnt ';' ) )
 				{
 					output_add_newline();
 				}
