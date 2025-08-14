@@ -1,4 +1,4 @@
-#include "H.h"
+#include "../H/H.h"
 
 #define formatter_version AS_BYTES( 0.2 )
 
@@ -455,6 +455,7 @@ start
 			{
 				++bracket_scope;
 				previous_token_type = token_symbol;
+				output_add_indent();
 				output_add_input();
 				jump check_input;
 			}
@@ -609,7 +610,7 @@ start
 					if( ( val_of( output_ref - 1 ) is '\n' or val_of( output_ref - 1 ) is '\t' ) and val_of( input_ref - 1 ) isnt '\n' and val_of( input_ref - 1 ) isnt '\t' )
 					{
 						--output_ref;
-						line_size = n4_max;
+						line_size = max_n4;
 					}
 					else
 					{
@@ -783,7 +784,7 @@ start
 			{
 				output_add_indent();
 
-				if( previous_token_type isnt token_word )
+				if( previous_token_type isnt token_word and previous_token_type isnt token_closed_parenthesis )
 				{
 					output_add_space();
 				}
