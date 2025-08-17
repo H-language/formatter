@@ -30,6 +30,8 @@ start
 		token_symbol,
 		token_open_parenthesis,
 		token_closed_parenthesis,
+		token_open_bracket,
+		token_closed_bracket,
 		token_semicolon
 	};
 
@@ -454,7 +456,7 @@ start
 			when( '[' )
 			{
 				++bracket_scope;
-				previous_token_type = token_symbol;
+				previous_token_type = token_open_bracket;
 				output_add_indent();
 				output_add_input();
 				jump check_input;
@@ -467,7 +469,7 @@ start
 				{
 					output_add_space();
 				}
-				previous_token_type = token_symbol;
+				previous_token_type = token_closed_bracket;
 				output_add_input();
 				jump check_input;
 			}
@@ -784,7 +786,7 @@ start
 			{
 				output_add_indent();
 
-				if( previous_token_type isnt token_word and previous_token_type isnt token_closed_parenthesis )
+				if( previous_token_type isnt token_word and previous_token_type isnt token_closed_parenthesis and previous_token_type isnt token_closed_bracket )
 				{
 					output_add_space();
 				}
@@ -817,7 +819,7 @@ start
 
 					if( is_letter( input_ref_val ) or input_ref_val is '_' )
 					{
-						if_all( val_of( input_ref - 1 ) isnt '-', val_of( output_ref - 1 ) isnt '.', val_of( output_ref - 1 ) isnt '#', ( val_of( output_ref - 1 ) isnt '*' or val_of( input_ref - 1 ) is ' ' ), val_of( output_ref - 1 ) isnt '&', val_of( output_ref - 1 ) isnt '!', ( val_of( output_ref - 1 ) isnt '+' or val_of( output_ref - 2 ) isnt '+' ), ( val_of( output_ref - 1 ) isnt '-' or val_of( output_ref - 2 ) isnt '-' ), ( val_of( output_ref - 1 ) isnt '>' or val_of( output_ref - 2 ) isnt '-' ) )
+						if_all( val_of( input_ref - 1 ) isnt '-', val_of( output_ref - 1 ) isnt '.', val_of( output_ref - 1 ) isnt '#', ( val_of( output_ref - 1 ) isnt '*' or val_of( input_ref - 1 ) is ' ' ), val_of( output_ref - 1 ) isnt '!', ( val_of( output_ref - 1 ) isnt '+' or val_of( output_ref - 2 ) isnt '+' ), ( val_of( output_ref - 1 ) isnt '-' or val_of( output_ref - 2 ) isnt '-' ), ( val_of( output_ref - 1 ) isnt '>' or val_of( output_ref - 2 ) isnt '-' ) )
 						{
 							output_add_space();
 						}
