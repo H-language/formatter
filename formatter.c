@@ -293,6 +293,35 @@ start
 						{
 							current_line_type = line_define;
 							++brace_scope;
+
+							while( val_of( input_ref ) isnt ' ' and val_of( input_ref ) isnt '\t' )
+							{ // define
+								output_add_input();
+							}
+
+							while( val_of( input_ref ) is ' ' or val_of( input_ref ) is '\t' )
+							{
+								++input_ref;
+							}
+							output_add( ' ' );
+
+							while_all( val_of( input_ref ) isnt ' ', val_of( input_ref ) isnt '\t', val_of( input_ref ) isnt '\\', val_of( input_ref ) isnt '(', val_of( input_ref ) isnt '\r', val_of( input_ref ) isnt '\n', val_of( input_ref ) isnt '\0' )
+							{
+								output_add_input();
+							}
+
+							if_any( val_of( input_ref ) is '(' )
+							{
+								previous_token_type = token_word;
+							}
+							else
+							{
+								while( val_of( input_ref ) is ' ' or val_of( input_ref ) is '\t' )
+								{
+									++input_ref;
+								}
+							}
+
 							skip;
 						}
 
@@ -548,7 +577,7 @@ start
 					output_add_input();
 					jump check_input;
 				}
-				else if_any( current_assignment_type is assignment_single_line, parenthesis_scope isnt 0, previous_token_type is token_value, previous_token_type is token_symbol, previous_token_type is token_closed_parenthesis )
+				else if_any( ( input_ref > 0 and val_of( input_ref - 1 ) is ' ' ), current_assignment_type is assignment_single_line, parenthesis_scope isnt 0, previous_token_type is token_value, previous_token_type is token_symbol, previous_token_type is token_closed_parenthesis )
 				{
 					jump add_input;
 				}
