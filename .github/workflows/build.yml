@@ -25,8 +25,8 @@ jobs:
       - name: setup structure
         shell: bash
         run: |
-          mkdir -p H formatter
-          mv "${{ env.PROGRAM_SOURCE }}" formatter/
+          mkdir -p H source
+          mv "${{ env.PROGRAM_SOURCE }}" source/
           curl -fLo H/H.h "https://raw.githubusercontent.com/H-language/H/main/H.h"
 
       #------- LINUX -------
@@ -37,7 +37,7 @@ jobs:
           echo 'man-db man-db/auto-update boolean false' | sudo debconf-set-selections
           sudo rm -f /var/lib/man-db/auto-update /var/lib/dpkg/info/man-db.postinst
           sudo apt-get update && sudo apt-get install -y --no-install-recommends tcc upx-ucl
-          cd formatter
+          cd source
           tcc -o "${{ env.PROGRAM_NAME }}" "${{ env.PROGRAM_SOURCE }}"
           upx --ultra-brute --force "${{ env.PROGRAM_NAME }}" || true
           mv "${{ env.PROGRAM_NAME }}" ../
@@ -52,7 +52,7 @@ jobs:
           wait
           unzip -q tcc.zip -d ./tcc
           unzip -q upx.zip -d ./upx
-          cd formatter
+          cd source
           ../tcc/tcc/tcc.exe -o "${{ env.PROGRAM_NAME }}.exe" "${{ env.PROGRAM_SOURCE }}"
           ../upx/upx-*/upx.exe --ultra-brute --force "${{ env.PROGRAM_NAME }}.exe" || true
           mv "${{ env.PROGRAM_NAME }}.exe" ../
