@@ -22,10 +22,12 @@ jobs:
       - name: checkout code
         uses: actions/checkout@v4
 
-      - name: download H.h
+      - name: setup structure
         shell: bash
         run: |
-          curl -fLo H.h "https://raw.githubusercontent.com/H-language/H/main/H.h"
+          mkdir -p H formatter
+          mv "${{ env.PROGRAM_SOURCE }}" formatter/
+          curl -fLo H/H.h "https://raw.githubusercontent.com/H-language/H/main/H.h"
 
       #------- LINUX -------
       - name: setup & build (Linux)
@@ -35,8 +37,10 @@ jobs:
           echo 'man-db man-db/auto-update boolean false' | sudo debconf-set-selections
           sudo rm -f /var/lib/man-db/auto-update /var/lib/dpkg/info/man-db.postinst
           sudo apt-get update && sudo apt-get install -y --no-install-recommends tcc upx-ucl
+          cd formatter
           tcc -o "${{ env.PROGRAM_NAME }}" "${{ env.PROGRAM_SOURCE }}"
           upx --ultra-brute --force "${{ env.PROGRAM_NAME }}" || true
+          mv "${{ env.PROGRAM_NAME }}" ../
 
       #------- WINDOWS -------
       - name: setup & build (Windows)
@@ -48,8 +52,10 @@ jobs:
           wait
           unzip -q tcc.zip -d ./tcc
           unzip -q upx.zip -d ./upx
-          ./tcc/tcc/tcc.exe -o "${{ env.PROGRAM_NAME }}.exe" "${{ env.PROGRAM_SOURCE }}"
-          ./upx/upx-*/upx.exe --ultra-brute --force "${{ env.PROGRAM_NAME }}.exe" || true
+          cd formatter
+          ../tcc/tcc/tcc.exe -o "${{ env.PROGRAM_NAME }}.exe" "${{ env.PROGRAM_SOURCE }}"
+          ../upx/upx-*/upx.exe --ultra-brute --force "${{ env.PROGRAM_NAME }}.exe" || true
+          mv "${{ env.PROGRAM_NAME }}.exe" ../
           
       #------- UPLOAD FOR RELEASE -------
       - name: upload artifact
