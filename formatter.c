@@ -47,24 +47,24 @@ start
 	temp n1 input_file_index = 1;
 	temp n1 check_mode = 0;
 
-	if( inputs_count <= 1 )
+	if( parameters_count <= 1 )
 	{
 		print( "usage: formatter [text-to-format] [optional-out]\n   or: formatter version\n   or: formatter check [text-to-check]\n" );
 		out success;
 	}
 	else
 	{
-		if( bytes_compare( inputs_bytes[ 1 ], "version", 7 ) is 0 )
+		if( bytes_compare( parameters[ 1 ], "version", 7 ) is 0 )
 		{
 			print( "formatter version " formatter_version " (" OS_NAME ")\n" );
 			out success;
 		}
-		else if( bytes_compare( inputs_bytes[ 1 ], "check", 5 ) is 0 )
+		else if( bytes_compare( parameters[ 1 ], "check", 5 ) is 0 )
 		{
 			check_mode = 1;
 			input_file_index = 2;
 
-			if( inputs_count <= 2 )
+			if( parameters_count <= 2 )
 			{
 				print( "usage: formatter check [source-to-check]\n" );
 				out failure;
@@ -74,13 +74,13 @@ start
 
 	//
 
-	temp const n2 input_path_size = bytes_measure( inputs_bytes[ input_file_index ] );
-	file input_file = map_file( inputs_bytes[ input_file_index ], input_path_size );
+	temp const n2 input_path_size = bytes_measure( parameters[ input_file_index ] );
+	file input_file = map_file( parameters[ input_file_index ], input_path_size );
 
 	if_nothing( input_file.mapped_bytes )
 	{
 		print( "file-mapping failed: cannot find file \"" );
-		print( inputs_bytes[ 1 ] );
+		print( parameters[ 1 ] );
 		print( "\"" );
 		out failure;
 	}
@@ -913,7 +913,7 @@ start
 			if( formatted_size isnt original_size )
 			{
 				print( "file not formatted: " );
-				print( inputs_bytes[ input_file_index ] );
+				print( parameters[ input_file_index ] );
 				print( " (size mismatch)\n" );
 				file_unmap( ref_of( input_file ) );
 				out failure;
@@ -925,7 +925,7 @@ start
 				if( output[ i ] isnt input_file.mapped_bytes[ i ] )
 				{
 					print( "file not formatted: " );
-					print( inputs_bytes[ input_file_index ] );
+					print( parameters[ input_file_index ] );
 					print( " (content differs)\n" );
 					file_unmap( ref_of( input_file ) );
 					out failure;
@@ -934,14 +934,14 @@ start
 			}
 
 			print( "file is formatted: " );
-			print( inputs_bytes[ input_file_index ] );
+			print( parameters[ input_file_index ] );
 			print( "\n" );
 			file_unmap( ref_of( input_file ) );
 			out success;
 		}
 
 		print( "formatting: \"" );
-		print( inputs_bytes[ input_file_index ] );
+		print( parameters[ input_file_index ] );
 		print( "\"" );
 
 		file_unmap( ref_of( input_file ) );
@@ -949,9 +949,9 @@ start
 		//
 
 		file output_file;
-		if( inputs_count > 2 )
+		if( parameters_count > 2 )
 		{
-			output_file = new_file( inputs_bytes[ input_file_index + 1 ] );
+			output_file = new_file( parameters[ input_file_index + 1 ] );
 
 			print( "\noutput: \"" );
 			print( output_file.path );
@@ -959,7 +959,7 @@ start
 		}
 		else
 		{
-			output_file = new_file( inputs_bytes[ input_file_index ], input_path_size );
+			output_file = new_file( parameters[ input_file_index ], input_path_size );
 		}
 
 		file_save( ref_of( output_file ), output, output_ref - output );
