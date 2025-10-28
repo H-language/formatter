@@ -9,7 +9,6 @@ permissions: { contents: write }
 env:
   PROGRAM_NAME: "formatter"
   PROGRAM_VERSION: "0.3.0"
-  ALTAR_VERSION: "0.1.0"
 
 jobs:
   build:
@@ -29,7 +28,7 @@ jobs:
       - name: download altar
         shell: bash
         run: |
-          curl -L https://github.com/H-language/altar/releases/download/${{ env.ALTAR_VERSION }}/altar${{ runner.os == 'Windows' && '.exe' || '' }} -O
+          curl -L https://github.com/H-language/altar/releases/latest/download/altar${{ runner.os == 'Windows' && '.exe' || '' }} -O
           
       - name: setup altar project
         shell: bash
