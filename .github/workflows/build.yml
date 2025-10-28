@@ -1,16 +1,15 @@
-###----------------------------------------------------------------------------
-# H build Script - v1 - @ENDESGA - 2025 - Made in NZ - CC0 - foss forever
-###----------------------------------------------------------------------------
+##############################################################################
+## altar build script - v1 - @ENDESGA - 2025 - CC0 - foss forever
+#######
+
 name: build
 on: workflow_dispatch
 permissions: { contents: write }
 
 env:
-  PROGRAM_NAME: formatter
-  PROGRAM_VERSION: "0.2"
-  PROGRAM_SOURCE: formatter.c
-  UPX_VERSION: "5.0.1"
-  TCC_VERSION: "0.9.27"
+  PROGRAM_NAME: "formatter"
+  PROGRAM_VERSION: "0.3.0"
+  ALTAR_VERSION: "0.1.0"
 
 jobs:
   build:
@@ -25,44 +24,30 @@ jobs:
       - name: setup structure
         shell: bash
         run: |
-          mkdir -p H source
-          mv "${{ env.PROGRAM_SOURCE }}" source/
-          curl -fLo H/H.h "https://raw.githubusercontent.com/H-language/H/main/H.h"
+          git clone https://github.com/H-language/${{ env.PROGRAM_NAME }}.git projects/${{ env.PROGRAM_NAME }}
 
-      #------- LINUX -------
-      - name: setup & build (Linux)
-        if: runner.os == 'Linux'
+      - name: download altar
         shell: bash
         run: |
-          echo 'man-db man-db/auto-update boolean false' | sudo debconf-set-selections
-          sudo rm -f /var/lib/man-db/auto-update /var/lib/dpkg/info/man-db.postinst
-          sudo apt-get update && sudo apt-get install -y --no-install-recommends tcc upx-ucl
-          cd source
-          tcc -o "${{ env.PROGRAM_NAME }}" "${{ env.PROGRAM_SOURCE }}"
-          upx --ultra-brute --force "${{ env.PROGRAM_NAME }}" || true
-          mv "${{ env.PROGRAM_NAME }}" ../
-
-      #------- WINDOWS -------
-      - name: setup & build (Windows)
-        if: runner.os == 'Windows'
+          curl -L https://github.com/H-language/altar/releases/download/${{ env.ALTAR_VERSION }}/altar${{ runner.os == 'Windows' && '.exe' || '' }} -O
+          
+      - name: setup altar project
         shell: bash
         run: |
-          curl -Lo tcc.zip "https://download.savannah.gnu.org/releases/tinycc/tcc-${{ env.TCC_VERSION }}-win64-bin.zip" &
-          curl -Lo upx.zip "https://github.com/upx/upx/releases/download/v${{ env.UPX_VERSION }}/upx-${{ env.UPX_VERSION }}-win64.zip" &
-          wait
-          unzip -q tcc.zip -d ./tcc
-          unzip -q upx.zip -d ./upx
-          cd source
-          ../tcc/tcc/tcc.exe -o "${{ env.PROGRAM_NAME }}.exe" "${{ env.PROGRAM_SOURCE }}"
-          ../upx/upx-*/upx.exe --ultra-brute --force "${{ env.PROGRAM_NAME }}.exe" || true
-          mv "${{ env.PROGRAM_NAME }}.exe" ../
+          ${{ runner.os == 'Linux' && 'chmod +x altar' || '' }}
+          ./altar${{ runner.os == 'Windows' && '.exe' || '' }} libraries clone H-language/H tools install gcc projects setup ${{ env.PROGRAM_NAME }} exit
+          
+      - name: compile
+        shell: bash
+        run: |
+          cd projects/${{ env.PROGRAM_NAME }} && ./compile_release.${{ runner.os == 'Windows' && 'bat' || 'sh' }} && cd ../..
           
       #------- UPLOAD FOR RELEASE -------
       - name: upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: ${{ env.PROGRAM_NAME }}-${{ runner.os }}
-          path: ${{ env.PROGRAM_NAME }}${{ runner.os == 'Windows' && '.exe' || '' }}
+          path: projects/${{ env.PROGRAM_NAME }}/${{ env.PROGRAM_NAME }}${{ runner.os == 'Windows' && '.exe' || '' }}
 
   release:
     needs: build
