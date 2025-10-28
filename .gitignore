@@ -1,0 +1,8 @@
+.gitattributes
+compile_*
+.vscode
+*.def
+formatter
+formatter_debug
+formatter.exe
+formatter_debug.exe

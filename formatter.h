@@ -1,6 +1,18 @@
+//////////////////////////////////////////////////////////////////////////////
+// formatter - @ENDESGA - 2025 - CC0 - foss forever
+///////
+
 #include <H.h>
 
-#define formatter_version AS_BYTES( 0.2 )
+//
+
+#define FORMATTER_VERSION_MAJOR 0
+#define FORMATTER_VERSION_MINOR 3
+#define FORMATTER_VERSION_PATCH 0
+
+//
+
+#define formatter_version AS_BYTES( FORMATTER_VERSION_MAJOR ) "." AS_BYTES( FORMATTER_VERSION_MINOR ) "." AS_BYTES( FORMATTER_VERSION_PATCH )
 
 start
 {
@@ -87,7 +99,8 @@ start
 
 	temp byte ref input_ref = input_file.mapped_bytes;
 
-	perm declare_bytes( output, MB( 1 ) );
+	perm byte output[ MB( 1 ) ];
+	temp byte ref output_ref = output;
 	temp n4 line_size = 0;
 	temp line_type current_line_type = line_unknown;
 	temp token_type previous_token_type = token_unknown;
@@ -968,3 +981,5 @@ start
 		out success;
 	}
 }
+
+///////
