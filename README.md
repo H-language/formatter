@@ -31,7 +31,7 @@ formatter game.h game_formatted.h
 ---
 to check if a file is already formatted:
 ```
-formatter check [source-to-check]
+formatter check [text-to-check]
 ```
 this will exit with success if the file is properly formatted, or failure if it needs formatting
 
