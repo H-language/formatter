@@ -2,7 +2,6 @@
 compile_*
 .vscode
 *.def
+*.exe
 formatter
 formatter_debug
-formatter.exe
-formatter_debug.exe
