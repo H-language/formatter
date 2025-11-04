@@ -238,7 +238,7 @@ start
 					{
 						output_add_newline();
 					}
-					
+
 					other skip;
 				}
 
