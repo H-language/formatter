@@ -1,18 +1,28 @@
-//////////////////////////////////////////////////////////////////////////////
-// formatter - @ENDESGA - 2025 - CC0 - foss forever
-///////
+////////////////////////////////////////////////////////////////
+//
+//  formatter
+//
+//  author(s):
+//  ENDESGA - https://x.com/ENDESGA | https://bsky.app/profile/endesga.bsky.social
+//
+//  https://github.com/H-language/formatter
+//  2025 - CC0 - FOSS forever
+//
+
+////////////////////////////////
+/// include(s)
 
 #include <H.h>
 
-//
+////////////////////////////////
+/// version
 
 #define FORMATTER_VERSION_MAJOR 0
-#define FORMATTER_VERSION_MINOR 3
+#define FORMATTER_VERSION_MINOR 4
 #define FORMATTER_VERSION_PATCH 0
+#define FORMATTER_VERSION AS_BYTES( FORMATTER_VERSION_MAJOR ) "." AS_BYTES( FORMATTER_VERSION_MINOR ) "." AS_BYTES( FORMATTER_VERSION_PATCH )
 
-//
-
-#define formatter_version AS_BYTES( FORMATTER_VERSION_MAJOR ) "." AS_BYTES( FORMATTER_VERSION_MINOR ) "." AS_BYTES( FORMATTER_VERSION_PATCH )
+////////////////////////////////////////////////////////////////
 
 start
 {
@@ -59,40 +69,44 @@ start
 	temp n1 input_file_index = 1;
 	temp n1 check_mode = 0;
 
-	if( parameters_count <= 1 )
+	////////
+	// usage and version
+
+	if( start_parameters_count <= 1 )
 	{
-		print( "usage: formatter [text-to-format] [optional-out]\n   or: formatter version\n   or: formatter check [text-to-check]\n" );
+		print( "usage: formatter [text-to-format] [optional-out]" newline "   or: formatter version" newline "   or: formatter check [text-to-check]" newline );
 		out success;
 	}
 	else
 	{
-		if( bytes_compare( parameters[ 1 ], "version", 7 ) is 0 )
+		if( bytes_compare( start_parameters[ 1 ], "version", 7 ) is 0 )
 		{
-			print( "formatter version " formatter_version " (" OS_NAME ")\n" );
+			print( "formatter version " FORMATTER_VERSION " (" OS_NAME ")" newline );
 			out success;
 		}
-		else if( bytes_compare( parameters[ 1 ], "check", 5 ) is 0 )
+		else if( bytes_compare( start_parameters[ 1 ], "check", 5 ) is 0 )
 		{
 			check_mode = 1;
 			input_file_index = 2;
 
-			if( parameters_count <= 2 )
+			if( start_parameters_count <= 2 )
 			{
-				print( "usage: formatter check [source-to-check]\n" );
+				print( "usage: formatter check [source-to-check]" newline );
 				out failure;
 			}
 		}
 	}
 
-	//
+	////////
+	// input
 
-	temp const n2 input_path_size = bytes_measure( parameters[ input_file_index ] );
-	file input_file = map_file( parameters[ input_file_index ], input_path_size );
+	temp const n2 input_path_size = bytes_measure( start_parameters[ input_file_index ] );
+	file input_file = map_file( start_parameters[ input_file_index ], input_path_size );
 
 	if_nothing( input_file.mapped_bytes )
 	{
 		print( "file-mapping failed: cannot find file \"" );
-		print( parameters[ 1 ] );
+		print( start_parameters[ 1 ] );
 		print( "\"" );
 		out failure;
 	}
@@ -112,7 +126,8 @@ start
 
 	temp i2 assignment_brace_scope = 0;
 
-	//
+	////////
+	// output
 
 	#define output_set( BYTE ) val_of( output_ref ) = BYTE
 
@@ -142,7 +157,7 @@ start
 			{\
 				previous_token_type = token_newline;\
 			}\
-			_output_add( '\n' );\
+			_output_add( newline_byte );\
 			line_size = 0;\
 		}\
 		END_DEF
@@ -161,13 +176,13 @@ start
 			skip_if( line_size isnt 0 );\
 			repeat( brace_scope )\
 			{\
-				output_set( '\t' );\
+				output_set( tab_byte );\
 				++output_ref;\
 			}\
 		}\
 		END_DEF
 
-	//
+	////////////////
 
 	check_input:
 	{
@@ -175,12 +190,12 @@ start
 
 		with( input_ref_val )
 		{
-			when( '\0' )
+			when( eof_byte )
 			{
 				jump input_eof;
 			}
 
-			when( ' ', '\t' )
+			when( ' ', tab_byte )
 			{
 				++input_ref;
 				jump check_input;
@@ -188,12 +203,12 @@ start
 
 			when( '\r' )
 			{
-				if( val_of( input_ref + 1 ) is '\n' )
+				if( val_of( input_ref + 1 ) is newline_byte )
 				{
 					++input_ref;
 				}
 			} // fall through
-			when( '\n' )
+			when( newline_byte )
 			{
 				if( current_assignment_type is assignment_start )
 				{
@@ -223,7 +238,7 @@ start
 					{
 						output_add_newline();
 					}
-					//
+					
 					other skip;
 				}
 
@@ -269,7 +284,7 @@ start
 					{
 						with( val_of( input_ref ) )
 						{
-							when( ' ', '\t' )
+							when( ' ', tab_byte )
 							{
 								++input_ref;
 								jump preprocessor_skip_gap;
@@ -307,18 +322,18 @@ start
 							current_line_type = line_define;
 							++brace_scope;
 
-							while( val_of( input_ref ) isnt ' ' and val_of( input_ref ) isnt '\t' )
+							while( val_of( input_ref ) isnt ' ' and val_of( input_ref ) isnt tab_byte )
 							{ // define
 								output_add_input();
 							}
 
-							while( val_of( input_ref ) is ' ' or val_of( input_ref ) is '\t' )
+							while( val_of( input_ref ) is ' ' or val_of( input_ref ) is tab_byte )
 							{
 								++input_ref;
 							}
 							output_add( ' ' );
 
-							while_all( val_of( input_ref ) isnt ' ', val_of( input_ref ) isnt '\t', val_of( input_ref ) isnt '\\', val_of( input_ref ) isnt '(', val_of( input_ref ) isnt '\r', val_of( input_ref ) isnt '\n', val_of( input_ref ) isnt '\0' )
+							while_all( val_of( input_ref ) isnt ' ', val_of( input_ref ) isnt tab_byte, val_of( input_ref ) isnt '\\', val_of( input_ref ) isnt '(', val_of( input_ref ) isnt '\r', val_of( input_ref ) isnt newline_byte, val_of( input_ref ) isnt eof_byte )
 							{
 								output_add_input();
 							}
@@ -329,7 +344,7 @@ start
 							}
 							else
 							{
-								while( val_of( input_ref ) is ' ' or val_of( input_ref ) is '\t' )
+								while( val_of( input_ref ) is ' ' or val_of( input_ref ) is tab_byte )
 								{
 									++input_ref;
 								}
@@ -384,18 +399,18 @@ start
 					{
 						when( '\r' )
 						{
-							if( val_of( input_ref + 1 ) is '\n' )
+							if( val_of( input_ref + 1 ) is newline_byte )
 							{
 								++input_ref;
 							}
 						} // fall through
-						when( '\n' )
+						when( newline_byte )
 						{
 							++input_ref;
 							skip;
 						}
 
-						when( ' ', '\t' )
+						when( ' ', tab_byte )
 						{
 							++input_ref;
 							jump process_define_newline;
@@ -416,6 +431,7 @@ start
 
 			when( '(' )
 			{
+				output_add_indent();
 				if( ( previous_token_type isnt token_word and val_of( input_ref - 1 ) isnt '-' ) or ( parenthesis_scope isnt 0 and val_of( input_ref - 1 ) is ' ' ) )
 				{
 					output_add_space();
@@ -522,8 +538,8 @@ start
 				{
 					jump add_input;
 				}
-
-				output_add( ' ' );
+				output_add_indent();
+				output_add_space();
 				while( val_of( input_ref ) isnt '>' )
 				{
 					output_add_input();
@@ -539,7 +555,7 @@ start
 				{
 					output_add( ' ' );
 				}
-				else if( val_of( output_ref - 1 ) is '\n' )
+				else if( val_of( output_ref - 1 ) is newline_byte )
 				{
 					--output_ref;
 				}
@@ -627,7 +643,7 @@ start
 				{
 					with( val_of( input_ref ) )
 					{
-						when( ' ', '\t' )
+						when( ' ', tab_byte )
 						{
 							++input_ref;
 							jump skip_semicolon_whitespace;
@@ -651,7 +667,7 @@ start
 					current_line_type = line_comment;
 					previous_token_type = token_newline;
 
-					if( ( val_of( output_ref - 1 ) is '\n' or val_of( output_ref - 1 ) is '\t' ) and val_of( input_ref - 1 ) isnt '\n' and val_of( input_ref - 1 ) isnt '\t' )
+					if( ( val_of( output_ref - 1 ) is newline_byte or val_of( output_ref - 1 ) is tab_byte or val_of( output_ref - 1 ) is ' ' ) and val_of( input_ref - 1 ) isnt newline_byte and val_of( input_ref - 1 ) isnt tab_byte )
 					{
 						--output_ref;
 						line_size = max_n4;
@@ -669,19 +685,19 @@ start
 					{
 						with( val_of( input_ref ) )
 						{
-							when( '\0' )
+							when( eof_byte )
 							{
 								jump input_eof;
 							}
 
 							when( '\r' )
 							{
-								if( val_of( input_ref + 1 ) is '\n' )
+								if( val_of( input_ref + 1 ) is newline_byte )
 								{
 									++input_ref;
 								}
 							} // fall through
-							when( '\n' )
+							when( newline_byte )
 							{
 								output_add_newline();
 								jump check_input;
@@ -706,7 +722,7 @@ start
 					{
 						with( val_of( input_ref ) )
 						{
-							when( '\0' )
+							when( eof_byte )
 							{
 								jump input_eof;
 							}
@@ -851,7 +867,8 @@ start
 				jump check_input;
 			}
 
-			//
+			////////
+			// words/symbols
 
 			other
 			{
@@ -909,7 +926,8 @@ start
 		}
 	}
 
-	//
+	////////////////////////////////
+	/// end of file
 
 	input_eof:
 	{
@@ -918,53 +936,59 @@ start
 			output_add_newline();
 		}
 
+		////////
+		// check
+
+		temp const n4 formatted_size = output_ref - output;
 		if( check_mode )
 		{
-			temp const n4 formatted_size = output_ref - output;
 			temp const n4 original_size = input_file.size;
+			temp const byte const_ref input_bytes = input_file.mapped_bytes;
 
 			if( formatted_size isnt original_size )
 			{
 				print( "file not formatted: " );
-				print( parameters[ input_file_index ] );
-				print( " (size mismatch)\n" );
-				file_unmap( ref_of( input_file ) );
-				out failure;
+				print( start_parameters[ input_file_index ] );
+				print( " (size mismatch)" newline );
+				jump check_failure;
 			}
 
-			temp n4 i = 0;
-			while( i < formatted_size )
+			temp n4 index = 0;
+			while( index < formatted_size )
 			{
-				if( output[ i ] isnt input_file.mapped_bytes[ i ] )
+				if( output[ index ] isnt input_bytes[ index ] )
 				{
 					print( "file not formatted: " );
-					print( parameters[ input_file_index ] );
-					print( " (content differs)\n" );
-					file_unmap( ref_of( input_file ) );
-					out failure;
+					print( start_parameters[ input_file_index ] );
+					print( " (content differs)" newline );
+					jump check_failure;
 				}
-				++i;
+				++index;
 			}
 
 			print( "file is formatted: " );
-			print( parameters[ input_file_index ] );
-			print( "\n" );
+			print( start_parameters[ input_file_index ] );
+			print_newline();
 			file_unmap( ref_of( input_file ) );
 			out success;
+
+			check_failure:
+			file_unmap( ref_of( input_file ) );
+			out failure;
 		}
 
 		print( "formatting: \"" );
-		print( parameters[ input_file_index ] );
+		print( start_parameters[ input_file_index ] );
 		print( "\"" );
-
 		file_unmap( ref_of( input_file ) );
 
-		//
+		/////////
+		// output
 
 		file output_file;
-		if( parameters_count > 2 )
+		if( start_parameters_count > 2 )
 		{
-			output_file = new_file( parameters[ input_file_index + 1 ] );
+			output_file = new_file( start_parameters[ input_file_index + 1 ] );
 
 			print( "\noutput: \"" );
 			print( output_file.path );
@@ -972,14 +996,14 @@ start
 		}
 		else
 		{
-			output_file = new_file( parameters[ input_file_index ], input_path_size );
+			output_file = new_file( start_parameters[ input_file_index ], input_path_size );
 		}
 
-		file_save( ref_of( output_file ), output, output_ref - output );
+		file_save( ref_of( output_file ), output, formatted_size );
 		file_close( ref_of( output_file ) );
 		print_newline();
 		out success;
 	}
 }
 
-///////
+////////////////////////////////////////////////////////////////
