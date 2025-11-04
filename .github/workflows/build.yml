@@ -1,6 +1,13 @@
-##############################################################################
-## altar build script - v1 - @ENDESGA - 2025 - CC0 - foss forever
-#######
+################################################################
+##
+##  H project build script, via altar
+##
+##  author(s):
+##  ENDESGA - https://x.com/ENDESGA | https://bsky.app/profile/endesga.bsky.social
+##
+##  https://github.com/H-language/altar
+##  2025 - CC0 - FOSS forever
+##
 
 name: build
 on: workflow_dispatch
@@ -8,7 +15,7 @@ permissions: { contents: write }
 
 env:
   PROGRAM_NAME: "formatter"
-  PROGRAM_VERSION: "0.3.0"
+  PROGRAM_VERSION: "0.4.0"
 
 jobs:
   build:
@@ -17,9 +24,6 @@ jobs:
         os: [ubuntu-latest, windows-latest]
     runs-on: ${{ matrix.os }}
     steps:
-      - name: checkout code
-        uses: actions/checkout@v4
-
       - name: setup structure
         shell: bash
         run: |
@@ -29,19 +33,18 @@ jobs:
         shell: bash
         run: |
           curl -L https://github.com/H-language/altar/releases/latest/download/altar${{ runner.os == 'Windows' && '.exe' || '' }} -O
+          ${{ runner.os == 'Linux' && 'chmod +x altar' || '' }}
           
-      - name: setup altar project
+      - name: setup project with altar
         shell: bash
         run: |
-          ${{ runner.os == 'Linux' && 'chmod +x altar' || '' }}
-          ./altar${{ runner.os == 'Windows' && '.exe' || '' }} libraries clone H-language/H tools install gcc projects setup ${{ env.PROGRAM_NAME }} exit
+          ./altar${{ runner.os == 'Windows' && '.exe' || '' }} defaults projects setup ${{ env.PROGRAM_NAME }} exit
           
       - name: compile
         shell: bash
         run: |
           cd projects/${{ env.PROGRAM_NAME }} && ./compile_release.${{ runner.os == 'Windows' && 'bat' || 'sh' }} && cd ../..
           
-      #------- UPLOAD FOR RELEASE -------
       - name: upload artifact
         uses: actions/upload-artifact@v4
         with:
