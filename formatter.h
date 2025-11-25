@@ -19,7 +19,7 @@
 
 #define FORMATTER_VERSION_MAJOR 0
 #define FORMATTER_VERSION_MINOR 4
-#define FORMATTER_VERSION_PATCH 0
+#define FORMATTER_VERSION_PATCH 1
 #define FORMATTER_VERSION AS_BYTES( FORMATTER_VERSION_MAJOR ) "." AS_BYTES( FORMATTER_VERSION_MINOR ) "." AS_BYTES( FORMATTER_VERSION_PATCH )
 
 ////////////////////////////////////////////////////////////////
@@ -516,6 +516,10 @@ start
 				++bracket_scope;
 				previous_token_type = token_open_bracket;
 				output_add_indent();
+				if( ( current_line_type is line_define or current_line_type is line_define_multi ) and val_of( input_ref - 1 ) is ' ' )
+				{
+					output_add_space();
+				}
 				output_add_input();
 				jump check_input;
 			}
@@ -939,11 +943,11 @@ start
 		////////
 		// check
 
-		temp const n4 formatted_size = output_ref - output;
+		temp n4 const formatted_size = output_ref - output;
 		if( check_mode )
 		{
-			temp const n4 original_size = input_file.size;
-			temp const byte const_ref input_bytes = input_file.mapped_bytes;
+			temp n4 const original_size = input_file.size;
+			temp byte const ref const input_bytes = input_file.mapped_bytes;
 
 			if( formatted_size isnt original_size )
 			{
