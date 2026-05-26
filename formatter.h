@@ -30,7 +30,7 @@
 #define FORMATTER_VERSION_MINOR 5
 #define FORMATTER_VERSION_PATCH 0
 #define FORMATTER_VERSION_COMMIT 1
-#define FORMATTER_VERSION AS_BYTES( FORMATTER_VERSION_MAJOR ) "." AS_BYTES( FORMATTER_VERSION_MINOR ) "." AS_BYTES( FORMATTER_VERSION_PATCH )
+#define FORMATTER_VERSION AS_BYTES( FORMATTER_VERSION_MAJOR ) "." AS_BYTES( FORMATTER_VERSION_MINOR ) "." AS_BYTES( FORMATTER_VERSION_PATCH ) "-" AS_BYTES( FORMATTER_VERSION_COMMIT )
 
 #pragma endregion
 
@@ -1064,7 +1064,7 @@ start
 
 	input_eof:
 	{
-		if( val_of( output_ref - 1 ) isnt '\n' )
+		if( val_of( output_ref - 1 ) isnt newline_byte )
 		{
 			output_add_newline();
 		}
@@ -1109,7 +1109,8 @@ start
 		if( start_inputs_count > 2 )
 		{
 			output_file = os_create_file( start_inputs[ input_file_index + 1 ] );
-			print( "\noutput: \"" );
+			print_newline();
+			print( "output: \"" );
 			print( output_file.path );
 			print( "\"" );
 		}
