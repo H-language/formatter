@@ -9,8 +9,6 @@
 //  2026 - CC0 - FOSS forever
 //
 
-#pragma once
-
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 #pragma region - DEPENDENCIES
 //
@@ -31,7 +29,7 @@
 #define FORMATTER_VERSION_MAJOR 0
 #define FORMATTER_VERSION_MINOR 5
 #define FORMATTER_VERSION_PATCH 0
-#define FORMATTER_VERSION_COMMIT 0
+#define FORMATTER_VERSION_COMMIT 1
 #define FORMATTER_VERSION AS_BYTES( FORMATTER_VERSION_MAJOR ) "." AS_BYTES( FORMATTER_VERSION_MINOR ) "." AS_BYTES( FORMATTER_VERSION_PATCH )
 
 #pragma endregion
