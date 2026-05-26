@@ -1,7 +1,9 @@
-.gitattributes
 compile_*
 .vscode
 *.def
 *.exe
+*.rc
+*.ico
 formatter
 formatter_debug
+formatter_uncompressed

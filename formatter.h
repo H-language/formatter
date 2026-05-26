@@ -1,95 +1,133 @@
-////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //
 //  formatter
 //
 //  author(s):
-//  ENDESGA - https://x.com/ENDESGA | https://bsky.app/profile/endesga.bsky.social
+//  ENDESGA - https://twitter.com/ENDESGA | https://bsky.app/profile/endesga.bsky.social
 //
 //  https://github.com/H-language/formatter
-//  2025 - CC0 - FOSS forever
+//  2026 - CC0 - FOSS forever
 //
 
-////////////////////////////////
-/// include(s)
+#pragma once
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+#pragma region - DEPENDENCIES
+//
 
 #include <H.h>
 
-////////////////////////////////
-/// version
+#pragma endregion dependencies
 
-#define FORMATTER_VERSION_MAJOR 0
-#define FORMATTER_VERSION_MINOR 4
-#define FORMATTER_VERSION_PATCH 1
-#define FORMATTER_VERSION AS_BYTES( FORMATTER_VERSION_MAJOR ) "." AS_BYTES( FORMATTER_VERSION_MINOR ) "." AS_BYTES( FORMATTER_VERSION_PATCH )
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+#pragma region - CONSTANTS
+//
+
+#define FORMATTER_NAME "formatter"
 
 ////////////////////////////////////////////////////////////////
+#pragma region - version
+
+#define FORMATTER_VERSION_MAJOR 0
+#define FORMATTER_VERSION_MINOR 5
+#define FORMATTER_VERSION_PATCH 0
+#define FORMATTER_VERSION_COMMIT 0
+#define FORMATTER_VERSION AS_BYTES( FORMATTER_VERSION_MAJOR ) "." AS_BYTES( FORMATTER_VERSION_MINOR ) "." AS_BYTES( FORMATTER_VERSION_PATCH )
+
+#pragma endregion
+
+#pragma endregion defaults
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+#pragma region - DECLARATIONS
+//
+
+////////////////////////////////////////////////////////////////
+#pragma region - line
+
+group( line_type )
+{
+	line_unknown,
+
+	line_include,
+	line_define,
+	line_define_multi,
+	line_if,
+	line_elif_else,
+	line_endif,
+	line_preprocessor
+};
+
+#pragma endregion line
+
+////////////////////////////////////////////////////////////////
+#pragma region - token
+
+group( token_type )
+{
+	token_unknown,
+
+	token_newline,
+	token_newline_gap,
+	token_define_newline,
+	token_word,
+	token_value,
+	token_symbol,
+	token_open_parenthesis,
+	token_closed_parenthesis,
+	token_open_bracket,
+	token_closed_bracket,
+	token_semicolon
+};
+
+#pragma endregion token
+
+////////////////////////////////////////////////////////////////
+#pragma region - assignment
+
+group( assignment_type )
+{
+	assignment_unknown,
+
+	assignment_start,
+	assignment_single_line,
+	assignment_multi_line
+};
+
+#pragma endregion assignment
+
+#pragma endregion declarations
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+#pragma region - START
+//
 
 start
 {
-	group( line_type )
-	{
-		line_unknown,
+	n1 input_file_index = 1;
+	n1 check_mode = 0;
 
-		line_comment,
-		line_include,
-		line_define,
-		line_define_multi,
-		line_if,
-		line_elif_else,
-		line_endif,
-		line_preprocessor
-	};
+	////////////////////////////////////////////////////////////////
+	#pragma region - arguments
 
-	group( token_type )
-	{
-		token_unknown,
-
-		token_newline,
-		token_newline_gap,
-		token_define_newline,
-		token_word,
-		token_value,
-		token_symbol,
-		token_open_parenthesis,
-		token_closed_parenthesis,
-		token_open_bracket,
-		token_closed_bracket,
-		token_semicolon
-	};
-
-	group( assignment_type )
-	{
-		assignment_unknown,
-
-		assignment_start,
-		assignment_single_line,
-		assignment_multi_line
-	};
-
-	temp n1 input_file_index = 1;
-	temp n1 check_mode = 0;
-
-	////////
-	// usage and version
-
-	if( start_parameters_count <= 1 )
+	if( start_inputs_count <= 1 )
 	{
 		print( "usage: formatter [text-to-format] [optional-out]" newline "   or: formatter version" newline "   or: formatter check [text-to-check]" newline );
 		out success;
 	}
 	else
 	{
-		if( bytes_compare( start_parameters[ 1 ], "version", 7 ) is 0 )
+		if( bytes_match( start_inputs[ 1 ], "version", 7 ) or bytes_match( start_inputs[ 1 ], "--version", 9 ) or bytes_match( start_inputs[ 1 ], "-v", 2 ) )
 		{
 			print( "formatter version " FORMATTER_VERSION " (" OS_NAME ")" newline );
 			out success;
 		}
-		else if( bytes_compare( start_parameters[ 1 ], "check", 5 ) is 0 )
+		else if( bytes_match( start_inputs[ 1 ], "check", 5 ) )
 		{
 			check_mode = 1;
 			input_file_index = 2;
 
-			if( start_parameters_count <= 2 )
+			if( start_inputs_count <= 2 )
 			{
 				print( "usage: formatter check [source-to-check]" newline );
 				out failure;
@@ -97,37 +135,46 @@ start
 		}
 	}
 
-	////////
-	// input
+	#pragma endregion arguments
 
-	temp const n2 input_path_size = bytes_measure( start_parameters[ input_file_index ] );
-	file input_file = map_file( start_parameters[ input_file_index ], input_path_size );
+	////////////////////////////////////////////////////////////////
+	#pragma region - input
+
+	const n2 input_path_size = bytes_measure( start_inputs[ input_file_index ] );
+	os_file input_file = os_map_file( start_inputs[ input_file_index ], input_path_size );
 
 	if_nothing( input_file.mapped_bytes )
 	{
 		print( "file-mapping failed: cannot find file \"" );
-		print( start_parameters[ 1 ] );
+		print( start_inputs[ 1 ] );
 		print( "\"" );
 		out failure;
 	}
 
-	temp byte ref input_ref = input_file.mapped_bytes;
+	#pragma endregion input
+
+	////////////////////////////////////////////////////////////////
+	#pragma region - state
+
+	byte const ref input_ref = input_file.mapped_bytes;
 
 	perm byte output[ MB( 1 ) ];
-	temp byte ref output_ref = output;
-	temp n4 line_size = 0;
-	temp line_type current_line_type = line_unknown;
-	temp token_type previous_token_type = token_unknown;
-	temp assignment_type current_assignment_type = assignment_unknown;
+	byte ref output_ref = output;
+	n4 line_size = 0;
+	line_type current_line_type = line_unknown;
+	token_type previous_token_type = token_unknown;
+	assignment_type current_assignment_type = assignment_unknown;
 
-	temp i2 parenthesis_scope = 0;
-	temp i2 brace_scope = 0;
-	temp i2 bracket_scope = 0;
+	i2 parenthesis_scope = 0;
+	i2 brace_scope = 0;
+	i2 bracket_scope = 0;
 
-	temp i2 assignment_brace_scope = 0;
+	i2 assignment_brace_scope = 0;
 
-	////////
-	// output
+	#pragma endregion state
+
+	////////////////////////////////////////////////////////////////
+	#pragma region - output macros
 
 	#define output_set( BYTE ) val_of( output_ref ) = BYTE
 
@@ -182,11 +229,17 @@ start
 		}\
 		END_DEF
 
-	////////////////
+	#pragma endregion output_macros
+
+	////////////////////////////////////////////////////////////////
+	#pragma region - parser
 
 	check_input:
 	{
-		temp byte input_ref_val = val_of( input_ref );
+		byte input_ref_val = val_of( input_ref );
+
+		////////////////////////////////
+		#pragma region | whitespace & newlines
 
 		with( input_ref_val )
 		{
@@ -215,7 +268,7 @@ start
 					current_assignment_type = assignment_multi_line;
 					++brace_scope;
 				}
-				else if( current_assignment_type isnt assignment_multi_line )
+				else if( current_assignment_type is assignment_single_line and ( current_line_type is line_define or current_line_type is line_define_multi ) )
 				{
 					current_assignment_type = assignment_unknown;
 				}
@@ -260,6 +313,8 @@ start
 			other skip;
 		}
 
+		#pragma endregion whitespace
+
 		if( current_assignment_type is assignment_start )
 		{
 			current_assignment_type = assignment_single_line;
@@ -267,6 +322,9 @@ start
 
 		with( input_ref_val )
 		{
+			////////////////////////////////
+			#pragma region | preprocessor
+
 			when( '#' )
 			{
 				previous_token_type = token_symbol;
@@ -338,7 +396,7 @@ start
 								output_add_input();
 							}
 
-							if_any( val_of( input_ref ) is '(' )
+							if( val_of( input_ref ) is '(' )
 							{
 								previous_token_type = token_word;
 							}
@@ -429,6 +487,11 @@ start
 				jump check_input;
 			}
 
+			#pragma endregion preprocessor
+
+			////////////////////////////////
+			#pragma region | parentheses
+
 			when( '(' )
 			{
 				output_add_indent();
@@ -454,6 +517,11 @@ start
 				jump check_input;
 			}
 
+			#pragma endregion parentheses
+
+			////////////////////////////////
+			#pragma region | braces
+
 			when( '{', '}' )
 			{
 				if( current_assignment_type isnt assignment_unknown )
@@ -466,7 +534,7 @@ start
 					{
 						if( assignment_brace_scope is 0 )
 						{
-							current_assignment_type is assignment_unknown;
+							current_assignment_type = assignment_unknown;
 						}
 						else
 						{
@@ -511,6 +579,11 @@ start
 				jump check_input;
 			}
 
+			#pragma endregion braces
+
+			////////////////////////////////
+			#pragma region | brackets
+
 			when( '[' )
 			{
 				++bracket_scope;
@@ -536,6 +609,11 @@ start
 				jump check_input;
 			}
 
+			#pragma endregion brackets
+
+			////////////////////////////////
+			#pragma region | include angle
+
 			when( '<' )
 			{
 				if( current_line_type isnt line_include )
@@ -551,6 +629,11 @@ start
 				output_add_input();
 				jump check_input;
 			}
+
+			#pragma endregion include_angle
+
+			////////////////////////////////
+			#pragma region | comma
 
 			when( ',' )
 			{
@@ -571,6 +654,11 @@ start
 				}
 				jump check_input;
 			}
+
+			#pragma endregion comma
+
+			////////////////////////////////
+			#pragma region | assignment
 
 			when( '=' )
 			{
@@ -600,6 +688,11 @@ start
 				output_add_input();
 				jump check_input;
 			}
+
+			#pragma endregion assignment
+
+			////////////////////////////////
+			#pragma region | colon & semicolon
 
 			when( ':' )
 			{
@@ -664,17 +757,21 @@ start
 				jump check_input;
 			}
 
+			#pragma endregion colon_and_semicolon
+
+			////////////////////////////////
+			#pragma region | comments
+
 			when( '/' )
 			{
 				if( val_of( input_ref + 1 ) is '/' )
 				{
-					current_line_type = line_comment;
 					previous_token_type = token_newline;
 
 					if( ( val_of( output_ref - 1 ) is newline_byte or val_of( output_ref - 1 ) is tab_byte or val_of( output_ref - 1 ) is ' ' ) and val_of( input_ref - 1 ) isnt newline_byte and val_of( input_ref - 1 ) isnt tab_byte )
 					{
 						--output_ref;
-						line_size = max_n4;
+						line_size = n4_max_val;
 					}
 					else
 					{
@@ -703,7 +800,10 @@ start
 							} // fall through
 							when( newline_byte )
 							{
-								output_add_newline();
+								if( current_line_type isnt line_define )
+								{
+									output_add_newline();
+								}
 								jump check_input;
 							}
 
@@ -756,6 +856,11 @@ start
 				}
 			}
 
+			#pragma endregion slash
+
+			////////////////////////////////
+			#pragma region | char literal
+
 			when( '\'' )
 			{
 				previous_token_type = token_symbol;
@@ -771,6 +876,11 @@ start
 				output_add_input();
 				jump check_input;
 			}
+
+			#pragma endregion char_literal
+
+			////////////////////////////////
+			#pragma region | string literal
 
 			when( '"' )
 			{
@@ -804,6 +914,11 @@ start
 				jump check_input;
 			}
 
+			#pragma endregion string_literal
+
+			////////////////////////////////
+			#pragma region | plus
+
 			when( '+' )
 			{
 				if( val_of( input_ref + 1 ) is '+' )
@@ -820,6 +935,11 @@ start
 
 				jump add_input;
 			}
+
+			#pragma endregion plus
+
+			////////////////////////////////
+			#pragma region | minus
 
 			when( '-' )
 			{
@@ -843,6 +963,11 @@ start
 
 				jump add_input;
 			}
+
+			#pragma endregion minus
+
+			////////////////////////////////
+			#pragma region | dot
 
 			when( '.' )
 			{
@@ -871,8 +996,10 @@ start
 				jump check_input;
 			}
 
-			////////
-			// words/symbols
+			#pragma endregion dot
+
+			////////////////////////////////
+			#pragma region | words & symbols
 
 			other
 			{
@@ -927,11 +1054,15 @@ start
 					jump check_input;
 				}
 			}
+
+			#pragma endregion words_and_symbols
 		}
 	}
 
-	////////////////////////////////
-	/// end of file
+	#pragma endregion parser
+
+	////////////////////////////////////////////////////////////////
+	#pragma region - eof
 
 	input_eof:
 	{
@@ -940,74 +1071,64 @@ start
 			output_add_newline();
 		}
 
-		////////
-		// check
+		n4 const formatted_size = output_ref - output;
+		n4 const original_size = input_file.size;
+		byte const ref const input_bytes = input_file.mapped_bytes;
 
-		temp n4 const formatted_size = output_ref - output;
+		flag const content_matches = formatted_size is original_size and bytes_match( output, input_bytes, formatted_size );
+
+		os_file_ref_unmap( ref_of( input_file ) );
+
 		if( check_mode )
 		{
-			temp n4 const original_size = input_file.size;
-			temp byte const ref const input_bytes = input_file.mapped_bytes;
-
-			if( formatted_size isnt original_size )
+			if( content_matches )
 			{
-				print( "file not formatted: " );
-				print( start_parameters[ input_file_index ] );
-				print( " (size mismatch)" newline );
-				jump check_failure;
+				print( "file is formatted: " );
+				print( start_inputs[ input_file_index ] );
+				print_newline();
+				out success;
 			}
 
-			temp n4 index = 0;
-			while( index < formatted_size )
-			{
-				if( output[ index ] isnt input_bytes[ index ] )
-				{
-					print( "file not formatted: " );
-					print( start_parameters[ input_file_index ] );
-					print( " (content differs)" newline );
-					jump check_failure;
-				}
-				++index;
-			}
-
-			print( "file is formatted: " );
-			print( start_parameters[ input_file_index ] );
-			print_newline();
-			file_unmap( ref_of( input_file ) );
-			out success;
-
-			check_failure:
-			file_unmap( ref_of( input_file ) );
+			print( "file not formatted: " );
+			print( start_inputs[ input_file_index ] );
+			print( pick( formatted_size isnt original_size, " (size mismatch)" newline, " (content differs)" newline ) );
 			out failure;
 		}
 
-		print( "formatting: \"" );
-		print( start_parameters[ input_file_index ] );
-		print( "\"" );
-		file_unmap( ref_of( input_file ) );
-
-		/////////
-		// output
-
-		file output_file;
-		if( start_parameters_count > 2 )
+		if( content_matches )
 		{
-			output_file = new_file( start_parameters[ input_file_index + 1 ] );
+			print( "unchanged: \"" );
+			print( start_inputs[ input_file_index ] );
+			print( "\"" newline );
+			out success;
+		}
 
+		print( "formatting: \"" );
+		print( start_inputs[ input_file_index ] );
+		print( "\"" );
+
+		os_file output_file;
+		if( start_inputs_count > 2 )
+		{
+			output_file = os_create_file( start_inputs[ input_file_index + 1 ] );
 			print( "\noutput: \"" );
 			print( output_file.path );
 			print( "\"" );
 		}
 		else
 		{
-			output_file = new_file( start_parameters[ input_file_index ], input_path_size );
+			output_file = os_create_file( start_inputs[ input_file_index ], input_path_size );
 		}
 
-		file_save( ref_of( output_file ), output, formatted_size );
-		file_close( ref_of( output_file ) );
+		os_file_ref_save( ref_of( output_file ), output, formatted_size );
+		os_file_ref_close( ref_of( output_file ) );
 		print_newline();
 		out success;
 	}
+
+	#pragma endregion eof
 }
 
-////////////////////////////////////////////////////////////////
+#pragma endregion start
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
